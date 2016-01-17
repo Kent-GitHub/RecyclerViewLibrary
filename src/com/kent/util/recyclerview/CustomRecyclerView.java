@@ -25,13 +25,21 @@ public class CustomRecyclerView extends RecyclerView implements
 	private OnItemClickListener mOnItemClickListener = null;
 	private OnItemSelectedListener mOnItemSelectedListener = null;
 	private OnItemLongClickListener mOnItemLongClickListener = null;
+	/**
+	 * Item左划接口
+	 */
+	private OnItemLeftScrollListener mOnItemLeftScrollListener;
+	/**
+	 * Item右划接口
+	 */
+	private OnItemRightScrollListener mOnItemRightScrollListener;
 	// 默认灰色
 	private int selectedColor = Color.parseColor("#cdcdcd");
 	// 默认白色
-	private int unSelectedColor = Color.parseColor("#ffffff");
-	
+	private int unSelectedColor = Color.parseColor("#00ffffff");
+
 	private boolean setSelectedEffectEnable;
-	
+
 	private boolean setClickEffectEnable;
 
 	public CustomRecyclerView(Context context) {
@@ -48,10 +56,15 @@ public class CustomRecyclerView extends RecyclerView implements
 		super(context, attrs, defStyle);
 		init(context);
 	}
-	
+
 	public void setOnItemClickListener(OnItemClickListener listener) {
 		this.addOnItemTouchListener(mOnItemTouchListener);
 		mOnItemClickListener = listener;
+	}
+
+	public void setOnItemLongClickListener(OnItemLongClickListener listener) {
+		this.addOnItemTouchListener(mOnItemTouchListener);
+		mOnItemLongClickListener = listener;
 	}
 
 	public void setOnItemSelectedListener(OnItemSelectedListener listener) {
@@ -65,6 +78,12 @@ public class CustomRecyclerView extends RecyclerView implements
 	}
 
 	public void setOnItemSelectedListener(OnItemSelectedListener listener,
+			int selectedColor, int unSelectedColor) {
+		setOnItemSelectedListener(listener, true, selectedColor,
+				unSelectedColor);
+	}
+
+	private void setOnItemSelectedListener(OnItemSelectedListener listener,
 			boolean setSelectedEffect, int selectedColor, int unSelectedColor) {
 		mOnItemSelectedListener = listener;
 		this.setSelectedEffectEnable = setSelectedEffect;
@@ -76,11 +95,6 @@ public class CustomRecyclerView extends RecyclerView implements
 			myAdapter.setOnItemSelectedListener(mOnItemSelectedListener,
 					setSelectedEffect, selectedColor, unSelectedColor);
 		}
-	}
-
-	public void setOnItemLongClickListener(OnItemLongClickListener listener) {
-		this.addOnItemTouchListener(mOnItemTouchListener);
-		mOnItemLongClickListener = listener;
 	}
 
 	public void setOnItemLeftScrollListener(OnItemLeftScrollListener listener) {
@@ -174,20 +188,10 @@ public class CustomRecyclerView extends RecyclerView implements
 				long id);
 	}
 
-	/**
-	 * Item左划接口
-	 */
-	private OnItemLeftScrollListener mOnItemLeftScrollListener;
-
 	public interface OnItemLeftScrollListener {
 		void onItemLeftScroll(View view, int position, float touchPonitX,
 				float distanceX, float totalDistanceX);
 	}
-
-	/**
-	 * Item右划接口
-	 */
-	private OnItemRightScrollListener mOnItemRightScrollListener;
 
 	public interface OnItemRightScrollListener {
 		void onItemRightScroll(View view, int position, float touchPonitX,
@@ -238,7 +242,7 @@ public class CustomRecyclerView extends RecyclerView implements
 			new SimpleOnGestureListener() {
 
 				@Override
-				public boolean onSingleTapUp(MotionEvent e) {
+				public boolean onSingleTapConfirmed(MotionEvent e) {
 					View view = findChildViewUnder(e.getX(), e.getY());
 					if (mOnItemClickListener != null) {
 						mOnItemClickListener.onItemClick(
@@ -277,7 +281,6 @@ public class CustomRecyclerView extends RecyclerView implements
 							}
 							isDirectionConfirm = true;
 						}
-//						Log.d(logTag, "distanceX : " + distanceX);
 						if (isHorizontalLeftScroll
 								&& mOnItemLeftScrollListener != null) {
 							mOnItemLeftScrollListener.onItemLeftScroll(view,
