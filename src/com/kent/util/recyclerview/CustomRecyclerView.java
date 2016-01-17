@@ -83,6 +83,14 @@ public class CustomRecyclerView extends RecyclerView implements
 		mOnItemLongClickListener = listener;
 	}
 
+	public void setOnItemLeftScrollListener(OnItemLeftScrollListener listener) {
+		mOnItemLeftScrollListener = listener;
+	}
+
+	public void setOnItemRightScrollListener(OnItemRightScrollListener listener) {
+		mOnItemRightScrollListener = listener;
+	}
+
 	public final OnItemClickListener getOnItemClickListener() {
 		return mOnItemClickListener;
 	}
@@ -223,6 +231,9 @@ public class CustomRecyclerView extends RecyclerView implements
 		return id;
 	}
 
+	private boolean isDirectionConfirm = false;
+	private boolean isHorizontalLeftScroll = false;
+	private boolean isHorizontalRightScroll = false;
 	private GestureDetector mGestureDetector = new GestureDetector(mContext,
 			new SimpleOnGestureListener() {
 
@@ -250,6 +261,37 @@ public class CustomRecyclerView extends RecyclerView implements
 					}
 				}
 
+				@Override
+				public boolean onScroll(MotionEvent e1, MotionEvent e2,
+						float distanceX, float distanceY) {
+					if (mOnItemLeftScrollListener != null
+							|| mOnItemRightScrollListener != null) {
+						View view = findChildViewUnder(e1.getX(), e1.getY());
+						if (!isDirectionConfirm) {
+							if (Math.abs(distanceX) > Math.abs(3 * distanceY)) {
+								isHorizontalRightScroll = !(isHorizontalLeftScroll = e2
+										.getX() < e1.getX());
+							} else {
+								isHorizontalLeftScroll = false;
+								isHorizontalRightScroll = false;
+							}
+							isDirectionConfirm = true;
+						}
+//						Log.d(logTag, "distanceX : " + distanceX);
+						if (isHorizontalLeftScroll
+								&& mOnItemLeftScrollListener != null) {
+							mOnItemLeftScrollListener.onItemLeftScroll(view,
+									getChildPosition(view), e1.getRawX(),
+									distanceX, e1.getX() - e2.getX());
+						} else if (isHorizontalRightScroll
+								&& mOnItemRightScrollListener != null) {
+							mOnItemRightScrollListener.onItemRightScroll(view,
+									getChildPosition(view), e1.getRawX(),
+									distanceX, e1.getX() - e2.getX());
+						}
+					}
+					return super.onScroll(e1, e2, distanceX, distanceY);
+				}
 
 			});
 
@@ -257,11 +299,25 @@ public class CustomRecyclerView extends RecyclerView implements
 	public boolean onInterceptTouchEvent(RecyclerView recyclerView,
 			MotionEvent event) {
 		mGestureDetector.onTouchEvent(event);
+		switch (event.getAction()) {
+		case MotionEvent.ACTION_UP:
+			isDirectionConfirm = false;
+			break;
+		}
+		if (isDirectionConfirm
+				&& (isHorizontalLeftScroll || isHorizontalRightScroll)) {
+			return true;
+		}
 		return false;
 	}
 
 	@Override
 	public void onTouchEvent(RecyclerView recyclerView, MotionEvent event) {
-		
+		mGestureDetector.onTouchEvent(event);
+		switch (event.getAction()) {
+		case MotionEvent.ACTION_UP:
+			isDirectionConfirm = false;
+			break;
+		}
 	}
 }
